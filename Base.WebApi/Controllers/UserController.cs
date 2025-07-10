@@ -1,4 +1,6 @@
+using Base.Application;
 using Base.Domain;
+using Base.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Base.Controllers;
@@ -6,7 +8,7 @@ namespace Base.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class UserController(IUserRepository userRepository) : ControllerBase
+public class UserController(IUserRepository userRepository, IAuthService authService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
@@ -46,5 +48,27 @@ public class UserController(IUserRepository userRepository) : ControllerBase
     {
         await Task.Run(() => userRepository.Delete(id));
         return NoContent();
+    }
+    [HttpPost("register")]
+    public IActionResult Register([FromBody] RegisterCommand command)
+    {
+        var result = authService.Register(command.RegisterDto.Username, command.RegisterDto.Email, command.RegisterDto.Password);
+        if (!result)
+            return BadRequest("Registration failed. Email may already be in use.");
+        return Ok("Registration successful.");
+    }
+
+    [HttpPost("login")]
+    public IActionResult Login([FromBody] LoginCommand command)
+    {
+        try
+        {
+            var response = authService.Authenticate(command.LoginDto.Email, command.LoginDto.Password);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized("Invalid credentials or inactive user.");
+        }
     }
 }
