@@ -1,11 +1,11 @@
 using Base.Domain;
-using Base.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Base.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class UserController(IUserRepository userRepository) : ControllerBase
 {
     [HttpGet]
