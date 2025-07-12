@@ -1,4 +1,4 @@
-﻿namespace Base.Application.CreateBook;
+﻿namespace Base.Application;
 
 public class BookDto
 {

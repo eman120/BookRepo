@@ -1,6 +1,6 @@
 using Base.Application;
 using Base.Domain;
-using Base.Infrastructure;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Base.Controllers;
@@ -8,7 +8,7 @@ namespace Base.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class UserController(IUserRepository userRepository, IAuthService authService) : ControllerBase
+public class UserController(IUserRepository userRepository, IMediator mediator) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetUsers()
@@ -49,21 +49,22 @@ public class UserController(IUserRepository userRepository, IAuthService authSer
         await Task.Run(() => userRepository.Delete(id));
         return NoContent();
     }
+
     [HttpPost("register")]
-    public IActionResult Register([FromBody] RegisterCommand command)
+    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
-        var result = authService.Register(command.RegisterDto.Username, command.RegisterDto.Email, command.RegisterDto.Password);
+        var result = await mediator.Send(new RegisterCommand(dto));
         if (!result)
             return BadRequest("Registration failed. Email may already be in use.");
         return Ok("Registration successful.");
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginCommand command)
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         try
         {
-            var response = authService.Authenticate(command.LoginDto.Email, command.LoginDto.Password);
+            var response = await mediator.Send(new LoginCommand(dto));
             return Ok(response);
         }
         catch (UnauthorizedAccessException)

@@ -1,4 +1,10 @@
-using Base.Domain;
+using Base.Application;
+using Base.Application.CreateBook;
+using Base.Application.DeleteBook;
+using Base.Application.GetAllBooks;
+using Base.Application.GetBookById;
+using Base.Application.UpdateBook;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Base.Controllers;
@@ -6,45 +12,45 @@ namespace Base.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
-public class BookController(IBookRepository bookRepository) : ControllerBase
+public class BookController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
+    public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks()
     {
-        var books = await bookRepository.GetAllAsync();
+        var books = await mediator.Send(new GetBooksQuery());
         return Ok(books);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Book>> GetBook(int id)
+    public async Task<ActionResult<BookDto>> GetBook(int id)
     {
-        var book = await bookRepository.GetByIdAsync(id);
+        var book = await mediator.Send(new GetBookByIdQuery(id));
         if (book == null)
             return NotFound();
         return Ok(book);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateBook(Book book)
+    public async Task<IActionResult> CreateBook([FromBody] CreateBookCommand command)
     {
-        await bookRepository.AddAsync(book);
-        return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
+        var bookDto = await mediator.Send(command);
+        return CreatedAtAction(nameof(GetBook), new { id = bookDto.Id }, bookDto);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateBook(int id, Book book)
+    public async Task<IActionResult> UpdateBook(int id, [FromBody] UpdateBookCommand command)
     {
-        if (id != book.Id)
+        if (id != command.Id)
             return BadRequest();
 
-        await bookRepository.UpdateAsync(book);
+        await mediator.Send(command);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBook(int id)
     {
-        await bookRepository.DeleteAsync(id);
+        await mediator.Send(new DeleteBookCommand(id));
         return NoContent();
     }
 }

@@ -1,5 +1,4 @@
-﻿using Base.Domain;
-using MediatR;
+﻿using MediatR;
 
 namespace Base.Application.CreateBook;
 

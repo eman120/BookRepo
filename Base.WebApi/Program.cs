@@ -1,4 +1,5 @@
 ﻿using Base.Application;
+using Base.Application.GetAllBooks;
 using Base.Domain;
 using Base.Infrastructure;
 using Base.Infrastructure.DbContexts;
@@ -55,6 +56,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetBooksQueryHandler).Assembly));
 
 var app = builder.Build();
 
